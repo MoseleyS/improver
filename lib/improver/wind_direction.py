@@ -33,8 +33,10 @@
 import iris
 from iris.coords import CellMethod
 import numpy as np
+import math
 from improver.utilities.cube_checker import check_cube_coordinates
 from improver.utilities.cube_manipulation import enforce_float32_precision
+from improver.nbhood.nbhood import NeighbourhoodProcessing
 
 
 class WindDirection(object):
@@ -117,6 +119,7 @@ class WindDirection(object):
 
     def _reset(self):
         """Empties working data objects"""
+        self.wdir_slice = None
         self.realization_axis = None
         self.wdir_complex = None
         self.wdir_slice_mean = None
@@ -347,20 +350,34 @@ class WindDirection(object):
                 angle.
             self.r_thresh (float):
                 Any r value below threshold is regarded as meaningless.
+            self.realization_axis (int):
+                Axis to collapse over.
 
         Defines:
             self.wdir_slice_mean.data (np.ndarray):
                 2D array - Wind direction degrees where ambigious values have
                 been replaced with data from first ensemble realization.
         """
-
         if self.backup_method == 'neighbourhood':
-            improved_values = np.full_like(self.wdir_slice_mean.data, None)
+            # Performs smoothing over a 6km square neighbourhood.
+            # Then calculates the mean wind direction.
+            n_realizations = len(self.wdir_slice.coord('realization').points)
+            nb_radius = math.sqrt((6000.**2.) * n_realizations)
+            nbhood = NeighbourhoodProcessing('square',
+                                             nb_radius,
+                                             weighted_mode=False)
+            child_class = WindDirection()
+            child_class.wdir_complex = nbhood.process(
+                self.wdir_slice.copy(data=self.wdir_complex)).data
+            child_class.realization_axis = self.realization_axis
+            child_class.wdir_slice_mean = self.wdir_slice_mean.copy()
+            child_class.wind_dir_mean()
+            improved_values = child_class.wdir_slice_mean.data
         else:
             # Takes first ensemble realization.
             improved_values = first_member
 
-        # If the r-value is low - subistite average wind direction value for
+        # If the r-value is low - substitute average wind direction value for
         # the wind direction taken from the first ensemble realization.
         self.wdir_slice_mean.data = np.where(where_low_r, improved_values,
                                              self.wdir_slice_mean.data)
@@ -410,6 +427,7 @@ class WindDirection(object):
                                                 y_coord_name,
                                                 x_coord_name]):
             self._reset()
+            self.wdir_slice = wdir_slice
             # Extract wind direction data.
             self.wdir_complex = self.deg_to_complex(wdir_slice.data)
             self.realization_axis, = wdir_slice.coord_dims("realization")

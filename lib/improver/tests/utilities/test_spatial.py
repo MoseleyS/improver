@@ -195,6 +195,31 @@ class Test_calculate_grid_spacing(IrisTest):
         with self.assertRaisesRegex(ValueError, msg):
             calculate_grid_spacing(self.lat_lon_cube, self.unit)
 
+    def test_tolerance_ok(self):
+        """Test correct answer is returned from an equal area grid with small
+        rounding errors"""
+        # Grid-length is 200km. Tolerance is ~1e-6 * 200km == ~2e-1
+        # Relative tolerance is 1e-5 == 2e0
+        coord_points = self.cube.coord(axis='x').points.copy()
+        coord_points[3] += 0.2
+        self.cube.replace_coord(self.cube.coord(axis='x').copy(
+            points=coord_points))
+        result = calculate_grid_spacing(self.cube, self.unit)
+        self.assertAlmostEqual(result, self.spacing)
+
+    def test_tolerance_fail(self):
+        """Test error is raised from an equal area grid with large
+        rounding errors"""
+        # Grid-length is 200km. Tolerance is ~1e-6 * 200km == ~2e-1
+        # Relative tolerance is 1e-5 == 2e0
+        coord_points = self.cube.coord(axis='x').points.copy()
+        coord_points[3] += 2.
+        self.cube.replace_coord(self.cube.coord(axis='x').copy(
+            points=coord_points))
+        msg = "Coordinate projection_x_coordinate points are not equally"
+        with self.assertRaisesRegex(ValueError, msg):
+            calculate_grid_spacing(self.cube, self.unit)
+
 
 class Test_convert_distance_into_number_of_grid_cells(IrisTest):
 

@@ -95,8 +95,10 @@ def calculate_grid_spacing(cube, units, axis='x'):
     coord.convert_units(units)
     diffs = np.unique(np.diff(coord.points))
     if len(diffs) > 1:
-        raise ValueError(
-            'Coordinate {} points are not equally spaced'.format(coord.name()))
+        if not np.allclose(diffs[0], diffs[1:]):
+            raise ValueError(
+                'Coordinate {} points are not equally spaced'.format(
+                    coord.name()))
     return diffs[0]
 
 

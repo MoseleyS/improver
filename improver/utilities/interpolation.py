@@ -46,7 +46,8 @@ def interpolate_missing_data(
     """
     Args:
         data (numpy.ndarray):
-            The field of data to be interpolated across gaps.
+            The field of data to be interpolated across gaps. Gaps are points where the
+            data value is np.nan.
         method (str):
             The method to use to fill in the data. This is usually "linear" for
             linear interpolation, and "nearest" for a nearest neighbour
@@ -90,7 +91,7 @@ def interpolate_missing_data(
                 np.where(index), values, (y_points, x_points), method=method
             )
         except QhullError:
-            data_filled = data
+            pass
         else:
             data_filled = data_updated
 
@@ -102,9 +103,10 @@ def interpolate_missing_data(
             data_filled[index] = np.clip(data_filled[index], limit[index], None)
 
     index = ~np.isfinite(data)
-    data[index] = data_filled[index]
+    data_out = data.copy()
+    data_out[index] = data_filled[index]
 
-    return data
+    return data_out
 
 
 class InterpolateUsingDifference(BasePlugin):

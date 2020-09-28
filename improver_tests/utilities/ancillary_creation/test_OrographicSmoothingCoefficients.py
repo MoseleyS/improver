@@ -65,6 +65,7 @@ class Test__init__(IrisTest):
         result = OrographicSmoothingCoefficients()
         self.assertEqual(result.min_smoothing_coefficient, 0.0)
         self.assertEqual(result.max_smoothing_coefficient, 1.0)
+        self.assertIsNone(result.gradient_cap)
         self.assertEqual(result.coefficient, 1.0)
         self.assertEqual(result.power, 1.0)
 
@@ -77,8 +78,9 @@ class Test__repr__(IrisTest):
         result = str(OrographicSmoothingCoefficients())
         msg = (
             "<OrographicSmoothingCoefficients: min_smoothing_coefficient: "
-            "{}; max_smoothing_coefficient: {}; coefficient: {}; power: {}"
-            ">".format(0.0, 1.0, 1, 1)
+            "{}; max_smoothing_coefficient: {}; gradient_cap: {}; "
+            "coefficient: {}; power: {}"
+            ">".format(0.0, 1.0, None, 1, 1)
         )
         self.assertEqual(result, msg)
 
@@ -190,6 +192,22 @@ class Test_process(IrisTest):
         result = self.plugin.process(self.cube)
 
         expected_x = np.array([[0.4, 0.2], [1.0, 0.6], [0.8, 1.0],])
+
+        expected_y = np.array([[0.8, 1.0, 0.6], [0.6, 0.8, 0.0],])
+
+        self.assertArrayAlmostEqual(result[0].data, expected_x)
+        self.assertArrayAlmostEqual(result[1].data, expected_y)
+
+    def test_gradient_cap(self):
+        """Tests that the final processing step gets the right values when the
+        gradient_cap is used."""
+        plugin = OrographicSmoothingCoefficients(
+            min_smoothing_coefficient=1.0, max_smoothing_coefficient=0.0,
+            gradient_cap=1.0,
+        )
+        result = plugin.process(self.cube)
+
+        expected_x = np.array([[0.8, 0.8], [1.0, 0.8], [0.8, 1.0],])
 
         expected_y = np.array([[0.8, 1.0, 0.6], [0.6, 0.8, 0.0],])
 

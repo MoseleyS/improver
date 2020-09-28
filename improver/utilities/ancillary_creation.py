@@ -72,6 +72,7 @@ class OrographicSmoothingCoefficients(BasePlugin):
         self,
         min_smoothing_coefficient=0.0,
         max_smoothing_coefficient=1.0,
+        gradient_cap=None,
         coefficient=1,
         power=1,
     ):
@@ -85,6 +86,10 @@ class OrographicSmoothingCoefficients(BasePlugin):
             max_smoothing_coefficient (float):
                 The maximum value of smoothing_coefficient that you want to go
                 into the recursive filter
+            gradient_cap (float):
+                The maximum value of the gradient to pass in to the smoothing
+                coefficient equation. This allows you to specify that the max smoothing
+                coeficient should apply to all gradients above this value.
             coefficient (float):
                 The coefficient for the smoothing_coefficient equation
             power (float):
@@ -92,24 +97,19 @@ class OrographicSmoothingCoefficients(BasePlugin):
         """
         self.max_smoothing_coefficient = max_smoothing_coefficient
         self.min_smoothing_coefficient = min_smoothing_coefficient
+        self.gradient_cap = gradient_cap
         self.coefficient = coefficient
         self.power = power
 
     def __repr__(self):
         """Represent the configured plugin instance as a string."""
-        result = (
+        return (
             "<OrographicSmoothingCoefficients: "
-            "min_smoothing_coefficient: {}; "
-            "max_smoothing_coefficient: {}; coefficient: {}; power: {}"
-            ">".format(
-                self.min_smoothing_coefficient,
-                self.max_smoothing_coefficient,
-                self.coefficient,
-                self.power,
-            )
+            f"min_smoothing_coefficient: {self.min_smoothing_coefficient}; "
+            f"max_smoothing_coefficient: {self.max_smoothing_coefficient}; "
+            f"gradient_cap: {self.gradient_cap}; "
+            f"coefficient: {self.coefficient}; power: {self.power}>"
         )
-
-        return result
 
     @staticmethod
     def scale_smoothing_coefficients(cubes, min_output=0, max_output=1):
@@ -262,6 +262,10 @@ class OrographicSmoothingCoefficients(BasePlugin):
                 )
             )
         gradient_x, gradient_y = GradientBetweenAdjacentGridSquares()(cube)
+        if self.gradient_cap:
+            print(f"Max gradients: x: {gradient_x.data.max()}, y: {gradient_y.data.max()}")
+            gradient_x.data = np.clip(gradient_x.data, None, self.gradient_cap)
+            gradient_y.data = np.clip(gradient_y.data, None, self.gradient_cap)
         (
             smoothing_coefficient_x,
             smoothing_coefficient_y,

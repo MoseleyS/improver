@@ -70,14 +70,17 @@ class Test_interpolate_missing_data(IrisTest):
         self.valid_data_for_limit_test[:, 1:4] = False
 
     def test_basic_linear(self):
-        """Test when all the points around the missing data are the same."""
+        """Test when all the points around the missing data are the same and input
+        array is unchanged."""
         data = np.ones((3, 3))
         data[1, 1] = np.nan
+        original_data = data.copy()
         expected = np.array([[1.0, 1.0, 1.0], [1.0, 1.0, 1.0], [1.0, 1.0, 1.0]])
 
         data_updated = interpolate_missing_data(data)
 
         self.assertArrayEqual(data_updated, expected)
+        self.assertArrayEqual(original_data, data)
 
     def test_basic_nearest(self):
         """Test when all the points around the missing data are the same."""

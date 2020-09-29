@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # -----------------------------------------------------------------------------
 # (C) British Crown Copyright 2017-2020 Met Office.
@@ -29,33 +28,22 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
-"""Script to calculate the ratio of convective precipitation to total precipitation."""
+"""Contains a class to trap stdout. Deprecated from PySteps v1.1.0 in favour
+of adding "silent_import=True" to the pyconfig file."""
 
-from improver import cli
+import contextlib
+import sys
 
 
-@cli.clizefy
-@cli.with_output
-def process(*cubes: cli.inputcube,):
-    """ Calculate the convection ratio from convective and dynamic (stratiform)
-    precipitation rate components.
-
-    Calculates the convective ratio as:
-
-        ratio = convective_rate / (convective_rate + dynamic_rate)
+@contextlib.contextmanager
+def redirect_stdout(target=None):
+    """Captures stdout and optionally returns it
 
     Args:
-        cubes (iris.cube.CubeList):
-            Cubes of "lwe_convective_precipitation_rate" and "lwe_stratiform_precipitation_rate"
-            in units that can be converted to "m s-1"
-
-    Returns:
-        iris.cube.Cube:
-            A cube of convection_ratio of the same dimensions as the input cubes.
-
+        target:
+            Any captured stdout is returned here.
     """
-    from improver.convection import ConvectionRatioFromComponents
-
-    if len(cubes) != 2:
-        raise IOError(f"Expected 2 input cubes, received {len(cubes)}")
-    return ConvectionRatioFromComponents()(cubes)
+    original = sys.stdout
+    sys.stdout = target
+    yield
+    sys.stdout = original

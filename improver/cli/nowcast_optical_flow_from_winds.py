@@ -29,33 +29,54 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
-"""Script to calculate the ratio of convective precipitation to total precipitation."""
+"""Script to calculate optical flow components as perturbations from model
+steering flow"""
 
 from improver import cli
+
+# Creates the value_converter that clize needs.
+inputflow = cli.create_constrained_inputcubelist_converter(
+    "grid_eastward_wind", "grid_northward_wind",
+)
 
 
 @cli.clizefy
 @cli.with_output
-def process(*cubes: cli.inputcube,):
-    """ Calculate the convection ratio from convective and dynamic (stratiform)
-    precipitation rate components.
-
-    Calculates the convective ratio as:
-
-        ratio = convective_rate / (convective_rate + dynamic_rate)
+def process(
+    steering_flow: inputflow,
+    orographic_enhancement: cli.inputcube,
+    *cubes: cli.inputcube,
+):
+    """Calculate optical flow components as perturbations from the model
+    steering flow.  Advects the older of the two input radar observations to
+    the validity time of the newer observation, then calculates the velocity
+    required to adjust this forecast to match the observation.  Sums the
+    steering flow and perturbation values to give advection components for
+    extrapolation nowcasting.
 
     Args:
-        cubes (iris.cube.CubeList):
-            Cubes of "lwe_convective_precipitation_rate" and "lwe_stratiform_precipitation_rate"
-            in units that can be converted to "m s-1"
+        steering_flow (iris.cube.CubeList):
+            Model steering flow as u- and v- wind components.  These must
+            have names: "grid_eastward_wind" and "grid_northward_wind".
+        orographic_enhancement (iris.cube.Cube):
+            Cube containing the orographic enhancement fields.
+        cubes (tuple of iris.cube.Cube):
+            Two radar precipitation observation cubes.
 
     Returns:
-        iris.cube.Cube:
-            A cube of convection_ratio of the same dimensions as the input cubes.
-
+        iris.cube.CubeList:
+            List of u- and v- advection velocities
     """
-    from improver.convection import ConvectionRatioFromComponents
+    from iris.cube import CubeList
+    from improver.nowcasting.optical_flow import (
+        generate_advection_velocities_from_winds,
+    )
 
     if len(cubes) != 2:
-        raise IOError(f"Expected 2 input cubes, received {len(cubes)}")
-    return ConvectionRatioFromComponents()(cubes)
+        raise ValueError("Expected 2 radar cubes - got {}".format(len(cubes)))
+
+    advection_velocities = generate_advection_velocities_from_winds(
+        CubeList(cubes), steering_flow, orographic_enhancement
+    )
+
+    return advection_velocities

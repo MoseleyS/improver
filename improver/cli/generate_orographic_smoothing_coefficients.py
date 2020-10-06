@@ -87,7 +87,10 @@ def process(
     from improver.utilities.ancillary_creation import OrographicSmoothingCoefficients
 
     plugin = OrographicSmoothingCoefficients(
-        min_smoothing_coefficient, max_smoothing_coefficient, coefficient, power
+        min_smoothing_coefficient=min_smoothing_coefficient,
+        max_smoothing_coefficient=max_smoothing_coefficient,
+        coefficient=coefficient,
+        power=power,
     )
 
     return plugin(orography)

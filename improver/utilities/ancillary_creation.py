@@ -72,9 +72,9 @@ class OrographicSmoothingCoefficients(BasePlugin):
         self,
         min_smoothing_coefficient=0.0,
         max_smoothing_coefficient=1.0,
-        gradient_cap=None,
         coefficient=1,
         power=1,
+        gradient_cap=None,
     ):
         """
         Initialise class.

@@ -169,9 +169,12 @@ class PrecipPhaseProbability(BasePlugin):
                 rain phases.
         """
         self._extract_input_cubes(cubes)
-        processed_falling_level = iris.util.squeeze(
-            self.get_discriminating_percentile(self.falling_level_cube)
-        )
+        if self.radius > 0:
+            processed_falling_level = iris.util.squeeze(
+                self.get_discriminating_percentile(self.falling_level_cube)
+            )
+        else:
+            processed_falling_level = self.falling_level_cube
 
         result_data = np.where(
             self.comparator(self.orography_cube.data, processed_falling_level.data),

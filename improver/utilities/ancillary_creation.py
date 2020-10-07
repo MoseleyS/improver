@@ -89,7 +89,7 @@ class OrographicSmoothingCoefficients(BasePlugin):
             gradient_cap (float):
                 The maximum value of the gradient to pass in to the smoothing
                 coefficient equation. This allows you to specify that the max smoothing
-                coeficient should apply to all gradients above this value.
+                coefficient should apply to all gradients above this value.
             coefficient (float):
                 The coefficient for the smoothing_coefficient equation
             power (float):
@@ -263,9 +263,8 @@ class OrographicSmoothingCoefficients(BasePlugin):
             )
         gradient_x, gradient_y = GradientBetweenAdjacentGridSquares()(cube)
         if self.gradient_cap:
-            print(f"Max gradients: x: {gradient_x.data.max()}, y: {gradient_y.data.max()}")
-            gradient_x.data = np.clip(gradient_x.data, None, self.gradient_cap)
-            gradient_y.data = np.clip(gradient_y.data, None, self.gradient_cap)
+            gradient_x.data = np.clip(gradient_x.data, -self.gradient_cap, self.gradient_cap)
+            gradient_y.data = np.clip(gradient_y.data, -self.gradient_cap, self.gradient_cap)
         (
             smoothing_coefficient_x,
             smoothing_coefficient_y,

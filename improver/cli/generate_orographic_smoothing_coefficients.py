@@ -43,6 +43,7 @@ def process(
     max_smoothing_coefficient: float = 1.0,
     coefficient: float = 1.0,
     power: float = 1.0,
+    gradient_cap: float = None,
 ):
     """Generate smoothing coefficients for recursive filtering based on
     orography gradients.
@@ -78,6 +79,10 @@ def process(
             The coefficient for the smoothing_coefficient equation.
         power (float):
             The power for the smoothing_coefficient equation.
+        gradient_cap (float):
+            The maximum value of the gradient to pass in to the smoothing
+            coefficient equation. This allows you to specify that the max smoothing
+            coefficient should apply to all gradients above this value.
 
     Returns:
         iris.cube.CubeList:
@@ -91,6 +96,7 @@ def process(
         max_smoothing_coefficient=max_smoothing_coefficient,
         coefficient=coefficient,
         power=power,
+        gradient_cap=gradient_cap,
     )
 
     return plugin(orography)
